@@ -6,6 +6,7 @@ import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
+import { LoadingPage } from "~/components/loading";
 
 dayjs.extend(relativeTime);
 
@@ -49,21 +50,26 @@ const PostView = (props: PostWithUser) => {
   );
 };
 
+const Feed = () => {
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
+  if (postsLoading) return <LoadingPage />;
+  if (!data) return <div>Something went wrong...</div>;
+
+  return (
+    <div className="flex flex-col">
+      {[...data, ...data].map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id}></PostView>
+      ))}
+    </div>
+  );
+};
+
 const Home: NextPage = () => {
-  const user = useUser();
-  const { data, isLoading } = api.posts.getAll.useQuery();
-  if (isLoading)
-    return (
-      <div>
-        <h1>Loading...</h1>
-      </div>
-    );
-  if (!data)
-    return (
-      <div>
-        <h1>Something went wrong</h1>
-      </div>
-    );
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
+  // Start fetching aspa
+  api.posts.getAll.useQuery();
+
+  if (!userLoaded) return <div></div>;
 
   return (
     <>
@@ -75,23 +81,19 @@ const Home: NextPage = () => {
       <main className="flex h-screen flex-row justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
           <div className="flex border-b border-slate-400 p-4">
-            {!user.isSignedIn && (
+            {!isSignedIn && (
               <div className="flex justify-center border-slate-400">
                 <SignInButton></SignInButton>
               </div>
             )}
-            {!!user.isSignedIn && (
+            {!!isSignedIn && (
               <div className="flex-column w-full justify-center border-slate-400">
                 <SignOutButton></SignOutButton>
                 <CreatePostWizard></CreatePostWizard>
               </div>
             )}
           </div>
-          <div className="flex flex-col">
-            {[...data, ...data].map((fullPost) => (
-              <PostView {...fullPost} key={fullPost.post.id}></PostView>
-            ))}
-          </div>
+          <Feed></Feed>
         </div>
       </main>
     </>
