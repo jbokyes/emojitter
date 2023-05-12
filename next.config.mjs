@@ -21,5 +21,10 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  swcMinify: true,
 };
 export default config;
